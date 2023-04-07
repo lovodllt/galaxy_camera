@@ -14,6 +14,7 @@
 #include <dynamic_reconfigure/client.h>
 #include <sensor_msgs/TimeReference.h>
 #include <rm_msgs/EnableImuTrigger.h>
+#include <std_msgs/String.h>
 
 namespace galaxy_camera
 {
@@ -35,6 +36,7 @@ private:
   void reconfigCB(CameraConfig& config, uint32_t level);
   void triggerCB(const sensor_msgs::TimeReference::ConstPtr& time_ref);
   void enableTriggerCB(const ros::TimerEvent&);
+  void cameraChange(const std_msgs::String);
 
   ros::NodeHandle nh_;
   static GX_DEV_HANDLE dev_handle_;
@@ -70,6 +72,7 @@ private:
   static double gamma_param_;
   static int64_t contrast_param_;
   static int improve_mode_;
+  ros::Subscriber camera_change_sub;
 };
 }  // namespace galaxy_camera
 

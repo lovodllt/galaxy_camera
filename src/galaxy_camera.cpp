@@ -28,7 +28,7 @@ void GalaxyCameraNodelet::onInit()
   nh_.param("pixel_format", pixel_format_, std::string("bgr8"));
   nh_.param("frame_id", frame_id_, std::string("camera_optical_frame"));
   nh_.param("camera_sn", camera_sn_, std::string(""));
-  nh_.param("enable_imu_trigger", enable_imu_trigger_, true);
+  nh_.param("enable_imu_trigger", enable_imu_trigger_, false);
   nh_.param("raising_filter_value", raising_filter_value_, 0);
   nh_.param("frame_rate", frame_rate_, 210.0);
   nh_.param("exposure_auto", exposure_auto_, true);
@@ -97,7 +97,7 @@ void GalaxyCameraNodelet::onInit()
   if (format == 0)
     static_assert(true, "Illegal format");
 
-  // assert(GXSetEnum(dev_handle_, GX_ENUM_PIXEL_FORMAT, format) == GX_STATUS_SUCCESS);
+  //   assert(GXSetEnum(dev_handle_, GX_ENUM_PIXEL_FORMAT, format) == GX_STATUS_SUCCESS);
   assert(GXSetInt(dev_handle_, GX_INT_WIDTH, image_width_) == GX_STATUS_SUCCESS);
   assert(GXSetInt(dev_handle_, GX_INT_HEIGHT, image_height_) == GX_STATUS_SUCCESS);
   assert(GXSetInt(dev_handle_, GX_INT_OFFSET_X, image_offset_x_) == GX_STATUS_SUCCESS);
@@ -155,6 +155,16 @@ void GalaxyCameraNodelet::onInit()
       ROS_ERROR("Failed to enable imu %s trigger camera", imu_name_.c_str());
     enable_trigger_timer_ = nh_.createTimer(ros::Duration(0.5), &GalaxyCameraNodelet::enableTriggerCB, this);
   }
+
+  camera_change_sub = nh_.subscribe("/camera_name", 50, &galaxy_camera::GalaxyCameraNodelet::cameraChange, this);
+}
+
+void GalaxyCameraNodelet::cameraChange(const std_msgs::String camera_change)
+{
+  if (strcmp(camera_change.data.c_str(), "galaxy_camera") == 0)
+    GXStreamOn(dev_handle_);
+  else
+    GXStreamOff(dev_handle_);
 }
 
 void GalaxyCameraNodelet::enableTriggerCB(const ros::TimerEvent&)
@@ -253,38 +263,38 @@ void GalaxyCameraNodelet::onFrameCB(GX_FRAME_CALLBACK_PARAM* pFrame)
       info_.header.stamp = now;
     }
     DxRaw8toRGB24((void*)pFrame->pImgBuf, img_, pFrame->nWidth, pFrame->nHeight, RAW2RGB_NEIGHBOUR, BAYERBG, false);
-    assert(GXGetFloat(dev_handle_, GX_FLOAT_GAMMA_PARAM, &gamma_param_) == GX_STATUS_SUCCESS);
-
-    int nLutLength;
-    assert(DxGetGammatLut(gamma_param_, NULL, &nLutLength) == DX_OK);
-    float* pGammaLut = new float[nLutLength];
-    assert(DxGetGammatLut(gamma_param_, pGammaLut, &nLutLength) == DX_OK);
-
-    assert(GXGetInt(dev_handle_, GX_INT_CONTRAST_PARAM, &contrast_param_) == GX_STATUS_SUCCESS);
-    assert(DxGetContrastLut(contrast_param_, NULL, &nLutLength) == DX_OK);
-    //      ROS_INFO("%d",nLutLength);
-    float* pContrastLut = new float[nLutLength];
-    //      ROS_INFO("%p",pContrastLut);
-    assert(DxGetContrastLut(contrast_param_, pContrastLut, &nLutLength) == DX_OK);
-    switch (improve_mode_)
-    {
-      case 0:
-        assert(DxImageImprovment(img_, img_, pFrame->nWidth, pFrame->nHeight, 0, pContrastLut, pGammaLut) == DX_OK);
-        break;
-      case 1:
-        assert(DxImageImprovment(img_, img_, pFrame->nWidth, pFrame->nHeight, 0, NULL, pGammaLut) == DX_OK);
-        break;
-      case 2:
-        assert(DxImageImprovment(img_, img_, pFrame->nWidth, pFrame->nHeight, 0, pContrastLut, NULL) == DX_OK);
-        break;
-      case 3:
-        break;
-    }
-
-    if (pGammaLut != NULL)
-      delete[] pGammaLut;
-    if (pContrastLut != NULL)
-      delete[] pContrastLut;
+    //    assert(GXGetFloat(dev_handle_, GX_FLOAT_GAMMA_PARAM, &gamma_param_) == GX_STATUS_SUCCESS);
+    //
+    //    int nLutLength;
+    //    assert(DxGetGammatLut(gamma_param_, NULL, &nLutLength) == DX_OK);
+    //    float* pGammaLut = new float[nLutLength];
+    //    assert(DxGetGammatLut(gamma_param_, pGammaLut, &nLutLength) == DX_OK);
+    //
+    //    assert(GXGetInt(dev_handle_, GX_INT_CONTRAST_PARAM, &contrast_param_) == GX_STATUS_SUCCESS);
+    //    assert(DxGetContrastLut(contrast_param_, NULL, &nLutLength) == DX_OK);
+    //    //      ROS_INFO("%d",nLutLength);
+    //    float* pContrastLut = new float[nLutLength];
+    //    //      ROS_INFO("%p",pContrastLut);
+    //    assert(DxGetContrastLut(contrast_param_, pContrastLut, &nLutLength) == DX_OK);
+    //    switch (improve_mode_)
+    //    {
+    //      case 0:
+    //        assert(DxImageImprovment(img_, img_, pFrame->nWidth, pFrame->nHeight, 0, pContrastLut, pGammaLut) ==
+    //        DX_OK); break;
+    //      case 1:
+    //        assert(DxImageImprovment(img_, img_, pFrame->nWidth, pFrame->nHeight, 0, NULL, pGammaLut) == DX_OK);
+    //        break;
+    //      case 2:
+    //        assert(DxImageImprovment(img_, img_, pFrame->nWidth, pFrame->nHeight, 0, pContrastLut, NULL) == DX_OK);
+    //        break;
+    //      case 3:
+    //        break;
+    //    }
+    //
+    //    if (pGammaLut != NULL)
+    //      delete[] pGammaLut;
+    //    if (pContrastLut != NULL)
+    //      delete[] pContrastLut;
     memcpy((char*)(&image_.data[0]), img_, image_.step * image_.height);
     pub_.publish(image_, info_);
   }
