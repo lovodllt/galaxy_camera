@@ -118,7 +118,7 @@ void GalaxyCameraNodelet::onInit()
     assert(GXSetEnum(dev_handle_, GX_ENUM_LINE_SELECTOR, GX_ENUM_LINE_SELECTOR_LINE3) == GX_STATUS_SUCCESS);
     assert(GXSetEnum(dev_handle_, GX_ENUM_LINE_MODE, GX_ENUM_LINE_MODE_INPUT) == GX_STATUS_SUCCESS);
 
-    trigger_sub_ = nh_.subscribe("/trigger_time", 50, &galaxy_camera::GalaxyCameraNodelet::triggerCB, this);
+    trigger_sub_ = nh_.subscribe("/rm_hw/" + imu_name_ + "/trigger_time", 50, &galaxy_camera::GalaxyCameraNodelet::triggerCB, this);
   }
   else
   {
@@ -140,7 +140,7 @@ void GalaxyCameraNodelet::onInit()
 
   if (enable_imu_trigger_)
   {
-    imu_trigger_client_ = ros::NodeHandle("rm_hw").serviceClient<rm_msgs::EnableImuTrigger>("enable_imu_trigger");
+    imu_trigger_client_ = nh_.serviceClient<rm_msgs::EnableImuTrigger>("imu_trigger");
     rm_msgs::EnableImuTrigger imu_trigger_srv;
     imu_trigger_srv.request.imu_name = imu_name_;
     imu_trigger_srv.request.enable_trigger = true;
