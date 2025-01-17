@@ -39,8 +39,10 @@ rosrun rqt_reconfigure rqt_reconfigure
 
 3. Calibrate:
 ```
-rosrun camera_calibration cameracalibrator.py --size 7x5 --square 0.030 image:=/galaxy_camera/image_raw camera:=/galaxy_camera
+rosrun camera_calibration cameracalibrator.py --size 11x8 --square 0.020 image:=/galaxy_camera/galaxy_camera/image_raw camera:=/galaxy_camera
 ```
+
+* size:是内部角点的数量，不是棋盘格的格子数(应为棋盘格的长宽都-1，队里的为11*8(12*9分别-1))
 
 4. More information:
 http://wiki.ros.org/image_pipeline
