@@ -6,6 +6,8 @@
 #include <utility>
 #include <ros/time.h>
 
+#define GX_MAX_STRING_SIZE 1024
+
 namespace galaxy_camera
 {
 PLUGINLIB_EXPORT_CLASS(galaxy_camera::GalaxyCameraNodelet, nodelet::Nodelet)
@@ -82,6 +84,27 @@ void GalaxyCameraNodelet::onInit()
   // Get handle
   assert(GXOpenDevice(&open_param, &dev_handle_) == GX_STATUS_SUCCESS);
   ROS_INFO("Camera Opened");
+
+  // Get camera serial number and model name
+  char sn[GX_MAX_STRING_SIZE] = {0};
+  char model[GX_MAX_STRING_SIZE] = {0};
+  size_t sn_size = sizeof(sn);
+  size_t model_size = sizeof(model);
+
+  GX_STATUS status_sn = GXGetString(dev_handle_, GX_STRING_DEVICE_SERIAL_NUMBER, sn, &sn_size);
+  GX_STATUS status_model = GXGetString(dev_handle_, GX_STRING_DEVICE_MODEL_NAME, model, &model_size);
+
+  if (status_sn == GX_STATUS_SUCCESS) {
+    ROS_INFO("Camera Serial Number: %s", sn);
+  } else {
+    ROS_ERROR("Failed to get camera serial number");
+  }
+
+  if (status_model == GX_STATUS_SUCCESS) {
+    ROS_INFO("Camera Model Name: %s", model);
+  } else {
+    ROS_ERROR("Failed to get camera model name");
+  }
 
   int64_t format = 0;
   if (pixel_format_ == "mono8")
