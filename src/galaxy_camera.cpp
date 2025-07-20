@@ -35,6 +35,7 @@ void GalaxyCameraNodelet::onInit()
   nh_.param("frame_rate", frame_rate_, 210.0);
   nh_.param("exposure_auto", exposure_auto_, true);
   nh_.param("exposure_value", exposure_value_, std::float_t(2000.));
+  nh_.param("stop_grab", stop_grab_, false);
   info_manager_.reset(new camera_info_manager::CameraInfoManager(nh_, camera_name_, camera_info_url_));
 
   image_transport::ImageTransport it(nh_);
@@ -334,8 +335,13 @@ void GalaxyCameraNodelet::reconfigCB(CameraConfig& config, uint32_t level)
   {
     config.exposure_value = exposure_value_;
     config.exposure_auto = exposure_auto_;
+    config.stop_grab = stop_grab_;
     exposure_initialized_flag_ = true;
   }
+  if (!config.stop_grab)
+    GXStreamOn(dev_handle_);
+  else
+    GXStreamOff(dev_handle_);
   // Exposure
   if (config.exposure_auto)
   {

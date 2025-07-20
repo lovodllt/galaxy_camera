@@ -73,6 +73,7 @@ private:
   static int64_t contrast_param_;
   static int improve_mode_;
   ros::Subscriber camera_change_sub;
+  bool stop_grab_{};
 };
 }  // namespace galaxy_camera
 
